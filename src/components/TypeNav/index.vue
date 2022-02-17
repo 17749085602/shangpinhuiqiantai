@@ -3,34 +3,36 @@
   <div class="type-nav">
     <div class="container">
       <!-- 事件委托|事件代理 -->
-      <div @mouseleave="leaveIndex()">
+      <div @mouseleave="leaveIndex()" @mouseenter="enterShow">
         <h2 class="all">全部商品分类</h2>
         <!-- 三级联动 -->
-        <div class="sort">
-          <!-- 利用事件委派 + 编程式导航实现路由的跳转与传递参数 -->
-          <div class="all-sort-list2" @click="goSearch">
-            <div class="item" v-for="(c1, index) in categoryList" :key="c1.categoryId" :class="{ cur: currentIndex == index }">
-              <h3 @mouseenter="changeIndex(index)">
-                <a :data-categoryName="c1.categoryName" :data-category1Id="c1.categoryId">{{ c1.categoryName }}</a>
-              </h3>
-              <!-- 二级、三级 -->
-              <div class="item-list clearfix" :style="{ display: currentIndex == index ? 'block' : 'none' }">
-                <div class="subitem" v-for="c2 in c1.categoryChild" :key="c2.categoryId">
-                  <dl class="fore">
-                    <dt>
-                      <a :data-categoryName="c2.categoryName" :data-category2Id="c2.categoryId">{{ c2.categoryName }}</a>
-                    </dt>
-                    <dd>
-                      <em v-for="c3 in c2.categoryChild" :key="c3.categoryId">
-                        <a :data-categoryName="c3.categoryName" :data-category3Id="c3.categoryId">{{ c3.categoryName }}</a>
-                      </em>
-                    </dd>
-                  </dl>
+        <transition name="sort">
+          <div class="sort" v-show="show">
+            <!-- 利用事件委派 + 编程式导航实现路由的跳转与传递参数 -->
+            <div class="all-sort-list2" @click="goSearch">
+              <div class="item" v-for="(c1, index) in categoryList" :key="c1.categoryId" :class="{ cur: currentIndex == index }">
+                <h3 @mouseenter="changeIndex(index)">
+                  <a :data-categoryName="c1.categoryName" :data-category1Id="c1.categoryId">{{ c1.categoryName }}</a>
+                </h3>
+                <!-- 二级、三级 -->
+                <div class="item-list clearfix" :style="{ display: currentIndex == index ? 'block' : 'none' }">
+                  <div class="subitem" v-for="c2 in c1.categoryChild" :key="c2.categoryId">
+                    <dl class="fore">
+                      <dt>
+                        <a :data-categoryName="c2.categoryName" :data-category2Id="c2.categoryId">{{ c2.categoryName }}</a>
+                      </dt>
+                      <dd>
+                        <em v-for="c3 in c2.categoryChild" :key="c3.categoryId">
+                          <a :data-categoryName="c3.categoryName" :data-category3Id="c3.categoryId">{{ c3.categoryName }}</a>
+                        </em>
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </transition>
       </div>
       <nav class="nav">
         <a href="###">服装城</a>
@@ -56,13 +58,17 @@ export default {
   data() {
     return {
       // 存储用户鼠标移上哪个一级分类
-      currentIndex: -1
+      currentIndex: -1,
+      show: true
     }
   },
   // 组件挂载完毕：可以向服务器发请求
   mounted() {
-    // 通知Vuex发请求，获取数据，存储于仓库当中
-    this.$store.dispatch('categoryList')
+    // 当组件挂载完毕：让show属性变为false
+    // 如果不是Home路由组件，将typeNav进行隐藏
+    if (this.$route.path != '/home') {
+      this.show = false
+    }
   },
   computed: {
     // 右侧需要的是一个函数，当使用这个计算属性的时候，右侧函数会立即执行一次
@@ -87,6 +93,9 @@ export default {
     leaveIndex() {
       // 鼠标移出 currentIndex，变为-1
       this.currentIndex = -1
+      if (this.$route.path != '/home') {
+        this.show = false
+      }
     },
     // 进行路由跳转的方法
     goSearch(event) {
@@ -113,10 +122,19 @@ export default {
         } else {
           query.category3Id = category3id
         }
-        // 整理参数
-        location.query = query
-        // 路由跳转
-        this.$router.push(location)
+        // 判断：如果路由跳转的时候，带有params参数，捎带着传递过去
+        if (this.$route.params) {
+          location.params = this.$route.params
+          // 整理参数
+          location.query = query
+          // 路由跳转
+          this.$router.push(location)
+        }
+      }
+    },
+    enterShow() {
+      if (this.$route.path != '/home') {
+        this.show = true
       }
     }
   }
@@ -244,6 +262,17 @@ export default {
           background-color: #e1251b;
         }
       }
+    }
+    // 过渡动画的样式
+    // 过渡动画开始的状态(进入)
+    .sort-enter {
+      height: 0;
+    }
+    .sort-enter-to {
+      height: 461px;
+    }
+    .sort-enter-active {
+      transition: all 0.5s linear;
     }
   }
 }
