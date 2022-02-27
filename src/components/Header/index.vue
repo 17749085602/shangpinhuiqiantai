@@ -67,6 +67,12 @@ export default {
         this.$router.push(loction)
       }
     }
+  },
+  mounted() {
+    // 通过全局事件组件清除关键字
+    this.$bus.$on('clear', () => {
+      this.keyword = ''
+    })
   }
 }
 </script>
